@@ -1,6 +1,15 @@
-package main
+package lexer
 
-var file = "lang.fx"
+import (
+	"errors"
+	"io"
+	"unicode"
+)
+
+const (
+	File    = "lang.fx"
+	RuneEOF = iota + 0x80
+)
 
 type Token struct {
 	lexema string
@@ -18,30 +27,59 @@ type Lexer struct {
 	line     int
 	r        RuneScanner
 	lastrune rune
+	accepted []rune
 }
 
-func NewLexer(r RuneScanner, file string) (l *Lexer, err error) {
+func NewLexer(r RuneScanner, file string) (l *Lexer) {
 	l = &Lexer{line: 1}
-	l.file = file
+	l.file = File
 	l.r = r
-	return l, nil
+	return l
 }
 
-func (l *Lexer) get() (r rune, err error) {
+func (l *Lexer) get() (r rune) {
+	var err error
 	r, _, err = l.r.ReadRune()
 	if err == nil {
 		l.lastrune = r
-		if r == '\n' {
-			l.line++
-		}
 	}
-	return r, err
+	if r == '\n' {
+		l.line++
+	}
+	if err == io.EOF {
+		l.lastrune = RuneEOF
+		return RuneEOF
+	}
+	if err != nil {
+		panic(err)
+	}
+	l.accepted = append(l.accepted, r)
+	return r
 }
 
-func (l *Lexer) unget() (err error) {
+func (l *Lexer) unget() {
+	var err error
+	if l.lastrune == RuneEOF {
+		return
+	}
 	err = l.r.UnreadRune()
 	if err == nil && l.lastrune == '\n' {
 		l.line--
 	}
-	return err
+	l.lastrune = unicode.ReplacementChar
+	if len(l.accepted) != 0 {
+		l.accepted = l.accepted[0 : len(l.accepted)-1]
+	}
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (l *Lexer) accept() (tok string) {
+	tok = string(l.accepted)
+	if tok == "" && l.lastrune != RuneEOF {
+		panic(errors.New("empty token"))
+	}
+	l.accepted = nil
+	return tok
 }
