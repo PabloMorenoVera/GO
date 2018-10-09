@@ -2,6 +2,7 @@ package lexer
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"unicode"
 )
@@ -82,4 +83,23 @@ func (l *Lexer) accept() (tok string) {
 	}
 	l.accepted = nil
 	return tok
+}
+
+func (l *Lexer) Lex() (t Token, err error) {
+
+	for r := l.get(); ; r = l.get() {
+		fmt.Println("rune:" + string(r))
+		if unicode.IsSpace(r) && r != '\n' {
+			l.unget()
+			t.lexema = l.accept()
+			return t, err
+		} //else {
+		//err := fmt.Sprintf("bad rune")
+		//return t, errors.New(err)
+		//}
+		if r == RuneEOF {
+			return
+		}
+	}
+	return t, err
 }
