@@ -10,12 +10,23 @@ import (
 const (
 	File    = "lang.fx"
 	RuneEOF = iota + 0x80
+	TokId
+	TokInt
+	TokBool
+	TokCoord
+	TokOpInt
+	TokOpBool
+	TokEOF
+	TokEol
+	TokFunc
 )
+
+type tokType rune
 
 type Token struct {
 	lexema string
-	tipo   string
-	valor  string
+	tokType
+	valor string
 }
 
 type RuneScanner interface {
@@ -85,20 +96,41 @@ func (l *Lexer) accept() (tok string) {
 	return tok
 }
 
+func (l *Lexer) readcomment() {
+	for r := l.get(); ; r = l.get() {
+		if r == '\n' {
+			return
+		}
+	}
+	return
+}
+
 func (l *Lexer) Lex() (t Token, err error) {
 
 	for r := l.get(); ; r = l.get() {
-		fmt.Println("rune:" + string(r))
 		if unicode.IsSpace(r) && r != '\n' {
 			l.unget()
 			t.lexema = l.accept()
 			return t, err
-		} //else {
-		//err := fmt.Sprintf("bad rune")
-		//return t, errors.New(err)
-		//}
-		if r == RuneEOF {
-			return
+		}
+		switch r {
+		case RuneEOF:
+			t.tokType = TokEOF
+			l.accept()
+			return t, err
+		case '\n':
+			t.tokType = TokEol
+			l.accept()
+			return t, err
+		case '/':
+			r = l.get()
+			if r == '/' {
+				l.readcomment()
+			}
+			return t, err
+		default:
+			err := fmt.Sprintf("bad rune %c %x", r, r)
+			return t, errors.New(err)
 		}
 	}
 	return t, err

@@ -9,7 +9,8 @@ import (
 
 func TestLexer(t *testing.T) {
 
-	f, err := os.Open("prueba.txt")
+	f, err := os.Open("lang.fx")
+	defer f.Close()
 	if err != nil {
 		print(err)
 	}
@@ -17,6 +18,8 @@ func TestLexer(t *testing.T) {
 	r := bufio.NewReader(f)
 	lex := NewLexer(r, File)
 
-	token, err := lex.Lex()
-	fmt.Println(token.lexema, err)
+	for index := 0; index < 13; index++ {
+		token, err := lex.Lex()
+		fmt.Println(token, err)
+	}
 }
