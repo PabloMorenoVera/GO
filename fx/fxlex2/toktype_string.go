@@ -5,39 +5,41 @@ package fxlex2
 import "strconv"
 
 const (
-	_TokType_name_0 = "TokNot"
-	_TokType_name_1 = "TokPorcTokAnd"
-	_TokType_name_2 = "TokLParTokRParTokMulTokSumTokCommaTokRestTokDotTokBar"
-	_TokType_name_3 = "TokPCTokMin"
-	_TokType_name_4 = "TokMax"
+	_TokType_name_0 = "TokIdTokEOFTokFuncTokMainTokDeclTokIterTokIfTokVTypeTokTypeIdTokBoolTokCoordTokIntTokFloatTokOpIntTokPunctTokOpBoolTokEolTokAsig"
+	_TokType_name_1 = "TokNot"
+	_TokType_name_2 = "TokPorcTokAnd"
+	_TokType_name_3 = "TokLParTokRParTokMulTokSumTokCommaTokRestTokDotTokBar"
+	_TokType_name_4 = "TokPCTokMinTokEqualTokMax"
 	_TokType_name_5 = "TokLCorch"
 	_TokType_name_6 = "TokRCorchTokXOr"
 	_TokType_name_7 = "TokLKeyTokOrTokRKey"
 )
 
 var (
-	_TokType_index_1 = [...]uint8{0, 7, 13}
-	_TokType_index_2 = [...]uint8{0, 7, 14, 20, 26, 34, 41, 49, 55}
-	_TokType_index_3 = [...]uint8{0, 5, 11}
+	_TokType_index_0 = [...]uint8{0, 5, 11, 18, 25, 32, 39, 44, 52, 61, 68, 76, 82, 90, 98, 106, 115, 121, 128}
+	_TokType_index_2 = [...]uint8{0, 7, 13}
+	_TokType_index_3 = [...]uint8{0, 7, 14, 20, 26, 34, 41, 47, 53}
+	_TokType_index_4 = [...]uint8{0, 5, 11, 19, 25}
 	_TokType_index_6 = [...]uint8{0, 9, 15}
 	_TokType_index_7 = [...]uint8{0, 7, 12, 19}
 )
 
 func (i TokType) String() string {
 	switch {
+	case 1 <= i && i <= 18:
+		i -= 1
+		return _TokType_name_0[_TokType_index_0[i]:_TokType_index_0[i+1]]
 	case i == 33:
-		return _TokType_name_0
+		return _TokType_name_1
 	case 37 <= i && i <= 38:
 		i -= 37
-		return _TokType_name_1[_TokType_index_1[i]:_TokType_index_1[i+1]]
+		return _TokType_name_2[_TokType_index_2[i]:_TokType_index_2[i+1]]
 	case 40 <= i && i <= 47:
 		i -= 40
-		return _TokType_name_2[_TokType_index_2[i]:_TokType_index_2[i+1]]
-	case 59 <= i && i <= 60:
-		i -= 59
 		return _TokType_name_3[_TokType_index_3[i]:_TokType_index_3[i+1]]
-	case i == 62:
-		return _TokType_name_4
+	case 59 <= i && i <= 62:
+		i -= 59
+		return _TokType_name_4[_TokType_index_4[i]:_TokType_index_4[i+1]]
 	case i == 91:
 		return _TokType_name_5
 	case 93 <= i && i <= 94:
