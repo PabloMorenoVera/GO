@@ -23,7 +23,7 @@ func TestNewLexer(t *testing.T) {
 
 	for token.Type != fxlex2.TokEOF {
 		token, err = parser.l.Lex()
-		fmt.Println("Lexema:", token.Lexema, fmt.Sprintf("Type:%v", token.Type), "Valor:", token.Valor)
+		fmt.Println("Lexema:", token.Lexema, fmt.Sprintf("Type: %v", token.Type), "Valor:", token.Valor)
 	}
 
 }
