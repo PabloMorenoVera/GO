@@ -259,7 +259,12 @@ func (l *Lexer) Peek() (t Token, err error) {
 }
 
 func (l *Lexer) Lex() (t Token, err error) {
-
+	DToks := true
+	defer func() {
+		if DToks {
+			fmt.Println("Lex:", t)
+		}
+	}()
 	if l.tokSaved != nil {
 		t = *l.tokSaved
 		l.tokSaved = nil
@@ -284,34 +289,18 @@ func (l *Lexer) Lex() (t Token, err error) {
 				t.Lexema, t.Type = l.accept(), TokBar
 				return t, nil
 			}
-
-		case '+':
-			t.Lexema, t.Type = l.accept(), TokSum
+		case '+', '-', '%', '(', ')', ',', '{', '}', ';', '[', ']', '.', '=', '|', '&', '!', '^':
+			t.Lexema, t.Type = l.accept(), TokType(r)
 			return t, nil
-		case '-':
-			t.Lexema, t.Type = l.accept(), TokRest
-			return t, nil
-		case '>':
+		case '<', '>':
 			r = l.get()
 			if r != '=' {
 				l.unget()
-				t.Lexema, t.Type = l.accept(), TokMax
+				t.Lexema, t.Type = l.accept(), TokType(r)
 				return t, nil
 			}
 			t.Lexema, t.Type = l.accept(), TokOpInt
 			return t, err
-		case '<':
-			r = l.get()
-			if r != '=' {
-				l.unget()
-				t.Lexema, t.Type = l.accept(), TokMin
-				return t, nil
-			}
-			t.Lexema, t.Type = l.accept(), TokOpInt
-			return t, err
-		case '%':
-			t.Lexema, t.Type = l.accept(), TokPorc
-			return t, nil
 		case '*':
 			r = l.get()
 			if r != '*' {
@@ -321,33 +310,6 @@ func (l *Lexer) Lex() (t Token, err error) {
 			}
 			t.Lexema, t.Type = l.accept(), TokOpInt
 			return t, err
-		case '(':
-			t.Lexema, t.Type = l.accept(), TokLPar
-			return t, nil
-		case ')':
-			t.Lexema, t.Type = l.accept(), TokRPar
-			return t, nil
-		case ',':
-			t.Lexema, t.Type = l.accept(), TokComma
-			return t, nil
-		case '{':
-			t.Lexema, t.Type = l.accept(), TokLKey
-			return t, nil
-		case '}':
-			t.Lexema, t.Type = l.accept(), TokRKey
-			return t, nil
-		case ';':
-			t.Lexema, t.Type = l.accept(), TokPC
-			return t, nil
-		case '[':
-			t.Lexema, t.Type = l.accept(), TokLCorch
-			return t, nil
-		case ']':
-			t.Lexema, t.Type = l.accept(), TokRCorch
-			return t, nil
-		case '.':
-			t.Lexema, t.Type = l.accept(), TokDot
-			return t, nil
 		case RuneEOF:
 			t.Type = TokEOF
 			l.accept()
@@ -364,21 +326,6 @@ func (l *Lexer) Lex() (t Token, err error) {
 			}
 			t.Lexema, t.Type = l.accept(), TokDecl
 			return t, err
-		case '=':
-			t.Lexema, t.Type = l.accept(), TokEqual
-			return t, nil
-		case '|':
-			t.Lexema, t.Type = l.accept(), TokOr
-			return t, nil
-		case '&':
-			t.Lexema, t.Type = l.accept(), TokAnd
-			return t, nil
-		case '!':
-			t.Lexema, t.Type = l.accept(), TokNot
-			return t, nil
-		case '^':
-			t.Lexema, t.Type = l.accept(), TokXOr
-			return t, nil
 		}
 
 		switch {

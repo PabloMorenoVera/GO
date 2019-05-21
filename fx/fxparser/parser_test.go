@@ -9,21 +9,22 @@ import (
 )
 
 func TestNewLexer(t *testing.T) {
-	var token fxlex2.Token
+	//var token fxlex2.Token
 
 	f, err := os.Open("lang.fx")
 	defer f.Close()
 	if err != nil {
 		print(err)
 	}
-
+	fmt.Println("Start")
 	r := bufio.NewReader(f)
 	parser := NewParser(fxlex2.NewLexer(r, "lang.fx"))
-	fmt.Println("Parser:", parser)
 
-	for token.Type != fxlex2.TokEOF {
-		token, err = parser.l.Lex()
-		fmt.Println("Lexema:", token.Lexema, fmt.Sprintf("Type: %v", token.Type), "Valor:", token.Valor)
-	}
+	fmt.Println("Return:", parser.Parse())
+
+	//for token.Type != fxlex2.TokEOF {
+	//token, err = parser.l.Lex()
+	//fmt.Println("Lexema:", token.Lexema, fmt.Sprintf("Type: %v", token.Type), "Valor:", token.Valor)
+	//}
 
 }

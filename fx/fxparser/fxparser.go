@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"fx/fxlex2"
+	"os"
+	"strings"
 )
 
 type Parser struct {
@@ -13,6 +15,28 @@ type Parser struct {
 
 func NewParser(l *fxlex2.Lexer) *Parser {
 	return &Parser{l, 0}
+}
+
+func (p *Parser) pushTrace(tag string) {
+	DebugDesc := true
+	if DebugDesc {
+		tabs := strings.Repeat("1. \t", p.depth)
+		fmt.Fprintf(os.Stderr, "%s %s \n", tabs, tag)
+	}
+	p.depth++
+}
+
+func (p *Parser) popTrace() {
+	p.depth--
+}
+
+func (p *Parser) Parse() error {
+	p.pushTrace("Parse")
+	defer p.popTrace()
+	if err := p.Program(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (p *Parser) match(tT fxlex2.TokType) (t fxlex2.Token, e error, isMatch bool) {
@@ -29,9 +53,14 @@ func (p *Parser) match(tT fxlex2.TokType) (t fxlex2.Token, e error, isMatch bool
 
 // <PROGRAM> ::= <FUNCTION> <PROGRAM>   |  'eof'
 func (p *Parser) Program() error {
+	p.pushTrace("Program")
+	defer p.popTrace()
+
 	_, err, isEOF := p.match(fxlex2.TokEOF)
-	if err != nil || !isEOF {
+	if err != nil {
 		return err
+	} else if isEOF {
+		return nil
 	}
 	if err := p.Function(); err != nil {
 		return err
@@ -41,6 +70,9 @@ func (p *Parser) Program() error {
 
 // <FUNCTION> ::= <HEADER>  '{' <STATEMENTS> '}'
 func (p *Parser) Function() error {
+	p.pushTrace("Function")
+	defer p.popTrace()
+
 	if err := p.Header(); err != nil {
 		return err
 	}
@@ -60,6 +92,9 @@ func (p *Parser) Function() error {
 
 // <HEADER> ::= 'func'  Id  '(' <OPT_PARAMS> ')'
 func (p *Parser) Header() error {
+	p.pushTrace("Header")
+	defer p.popTrace()
+
 	_, err, isfunc := p.match(fxlex2.TokFunc)
 	if err != nil || !isfunc {
 		return err
@@ -84,6 +119,9 @@ func (p *Parser) Header() error {
 
 // <OPT_PARAMS>  ::= TypeId  Id  <PARAMS>  |   Empty
 func (p *Parser) OptParams() error {
+	p.pushTrace("Opt_Params")
+	defer p.popTrace()
+
 	_, err, isTID := p.match(fxlex2.TokTypeId)
 	if err != nil || !isTID { //Empty
 		return err
@@ -97,6 +135,9 @@ func (p *Parser) OptParams() error {
 
 // <PARAMS>  ::= ','  TypeId  Id   <PARAMS>  |  Empty
 func (p *Parser) Params() error {
+	p.pushTrace("Params")
+	defer p.popTrace()
+
 	_, err, isComma := p.match(fxlex2.TokComma)
 	if err != nil || !isComma { //Empty
 		return err
@@ -114,6 +155,9 @@ func (p *Parser) Params() error {
 
 // <STATEMENTS>    ::= 'iter' '(' Id  ':='  <EXPR> ';' <EXPR> ',' <EXPR> ')' '{' <STATEMENT> '}'  <STATEMENT>  |     Id   '(' <FUNC_CALL> ';'   <STATEMENT>    |     Empty
 func (p *Parser) Statement() error {
+	p.pushTrace("Statement")
+	defer p.popTrace()
+
 	t, err := p.l.Peek()
 	if err != nil {
 		return err
@@ -189,6 +233,9 @@ func (p *Parser) Statement() error {
 
 // <FUNC_CALL>  ::= <EXPR>  <ARGS>  ')'   |    ')'
 func (p *Parser) FuncCall() error {
+	p.pushTrace("Func_Call")
+	defer p.popTrace()
+
 	_, err, isRPar := p.match(fxlex2.TokRPar)
 	if err == nil && !isRPar {
 		if err := p.Expr(); err != nil {
@@ -209,6 +256,9 @@ func (p *Parser) FuncCall() error {
 
 // <ARGS>  ::= ','  <EXPR>  <ARGS>  |   Empty
 func (p *Parser) Args() error {
+	p.pushTrace("Args")
+	defer p.popTrace()
+
 	_, err, isComma := p.match(fxlex2.TokTypeId)
 	if err != nil || !isComma { //Empty
 		return err
@@ -221,6 +271,9 @@ func (p *Parser) Args() error {
 
 // <EXPR> ::= int_literal  |  bool_literal  |  Id
 func (p *Parser) Expr() error {
+	p.pushTrace("Expr")
+	defer p.popTrace()
+
 	t, err := p.l.Peek()
 	if err != nil {
 		return err
