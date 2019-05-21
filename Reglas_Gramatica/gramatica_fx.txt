@@ -1,0 +1,142 @@
+========================================
+Versión I (Gramática con precedencia) |
+========================================
+Gramática incial. Tiene ambigüedad en <PARAMS> y en <STATEMENTS>.
+
+<PROGRAM>       ::= <FUNCTION>    <PROGRAM>   |
+                    'eof'
+
+<FUNCTION>      ::= <HEADER>    '{' <STATEMENTS> '}'
+
+<HEADER>        ::= 'func'    Id   '(' <OPT_PARAMS> ')'
+
+<OPT_PARAMS>  ::= <PARAMS>  |
+                    Empty
+
+<PARAMS>        ::= TypeId  Id  ',' <PARAMS>  |
+                    TypeId  Id
+
+<STATEMENTS>    ::= <ITER>  '{' <STATEMENTS> '}'   <STATEMENTS>    |
+                    <FUNC_CALL>   <STATEMENTS>    |
+                    Empty
+
+<ITER>          ::= 'iter'  '(' <IMP_DECL>   ';'   <EXPRESION>   ','   <EXPRESION> ')'
+
+<IMP_DECL>      ::= Id  ':='  <EXPRESION>
+
+<FUNC_CALL>     ::= Id   '(' <ARGS> ')'   ';'
+
+<ARGS>          ::= <EXPRESION>  ','  <ARGS>   |
+                    Empty
+
+<EXPRESION>     ::= <ATOM>
+
+<ATOM>          ::= int_literal |
+                    bool        |
+                    Id
+
+==========================================
+Versión II (Gramática sin ambigüedad) |
+==========================================
+Se cambiado <EXPRESION> por <EXPR>.
+Se ha quitado la ambigüedad en <PARAMS> haciendo modificaciones en <OPT_PARAMS> y en <PARAMS>. Se ha modificado <PARAMS> para permitir parámetros vacíos.
+
+<PROGRAM>       ::= <FUNCTION>    <PROGRAM>   |
+                    'eof'
+
+<FUNCTION>      ::= <HEADER>    '{' <STATEMENTS> '}'
+
+<HEADER>        ::= 'func'    Id   '(' <OPT_PARAMS> ')'   |
+
+<OPT_PARAMS>    ::= TypeId  Id  <PARAMS>  |
+                    Empty
+
+<PARAMS>        ::= ','  TypeId  Id   <PARAMS>  |
+                    Empty
+
+<STATEMENTS>    ::= <ITER>  '{' <STATEMENTS> '}'   <STATEMENTS>    |
+                    <FUNC_CALL>   <STATEMENTS>    |
+                    Empty
+
+<ITER>          ::= 'iter'  '(' <IMP_DECL>   ';'   <EXPR>   ','   <EXPR> ')'
+
+<IMP_DECL>      ::= Id  ':='  <EXPR>
+
+<FUNC_CALL>     ::= Id   '(' <ARGS> ')'   ';'
+
+<ARGS>          ::= <EXPR>  ','  <ARGS>   |
+                    Empty
+
+<EXPRESION>     ::= <ATOM>
+
+<ATOM>          ::= int_literal |
+                    bool        |
+                    Id
+
+==========================================
+Versión III (Gramática expandida)         |
+==========================================
+Se ha promocionado <ITER> y <FUNC_CALL> a <STATEMENTS> para quitar la ambigüedad. Se ha modificado <ARGS> para admitir argumentos vacíos.
+
+<PROGRAM>       ::= <FUNCTION>    <PROGRAM>   |
+                    'eof'
+
+<FUNCTION>      ::= <HEADER>    '{' <STATEMENTS> '}'
+
+<HEADER>        ::= 'func'    Id   '(' <OPT_PARAMS> ')'   |
+
+<OPT_PARAMS>    ::= TypeId  Id  <PARAMS>  |
+                    Empty
+
+<PARAMS>        ::= ','  TypeId  Id   <PARAMS>  |
+                    Empty
+
+<STATEMENTS>    ::= 'iter'  '(' <IMP_DECL>   ';'   <EXPR>   ','   <EXPR> ')'  '{' <STATEMENTS> '}'   <STATEMENTS>    |
+                    Id   '(' <OPT_ARGS> ')'   ';'   <STATEMENTS>    |
+                    Empty
+
+<IMP_DECL>      ::= Id  ':='  <EXPR>
+
+<OPT_ARGS>      ::= <EXPR>   <ARGS>  |
+                    Empty
+
+<ARGS>          ::= ','   <EXPR>    <ARGS>   |
+                    Empty
+
+<EXPRESION>     ::= int_literal   |
+                    bool_literal  |
+                    Id
+
+=========================================
+Versión IV (Gramática con pequeño hack)  |
+=========================================
+# El arreglo viene de que <EXPR> no puede empezar nunca por paréntesis cerrado, por lo que la regla es válida.
+# Pasa lo mismo con <FUNCTION> y 'eof'. <FUNCTION> no puede empezar por 'eof' porque sólo hay un 'eof' en el fichero, por lo que si <FUNCTION> empezase por 'eof', no habría nada después.
+Se ha promocionado <IMP_DECL> para quitar una regla de la gramática.
+
+<PROGRAM>       ::= <FUNCTION>    <PROGRAM>   |
+                    'eof'
+
+<FUNCTION>      ::= <HEADER>    '{' <STATEMENTS> '}'
+
+<HEADER>        ::= 'func'    Id   '(' <OPT_PARAMS> ')'
+
+<OPT_PARAMS>    ::= TypeId  Id  <PARAMS>  |
+                    Empty
+
+<PARAMS>        ::= ','  TypeId  Id   <PARAMS>  |
+                    Empty
+
+<STATEMENTS>    ::= 'iter'  '(' Id  ':='  <EXPR>   ';'   <EXPR>   ','   <EXPR> ')'  '{' <STATEMENTS> '}'   <STATEMENTS>    |
+                    Id   '(' <FUNC_CALL> ';'   <STATEMENTS>    |
+                    Empty
+
+<FUNC_CALL>     ::= <EXPR>  <ARGS>  ')'   |
+                    ')'
+
+<ARGS>          ::= ','   <EXPR>    <ARGS>   |
+                    Empty
+
+<EXPR>     ::= int_literal   |
+                    bool_literal  |
+                    Id

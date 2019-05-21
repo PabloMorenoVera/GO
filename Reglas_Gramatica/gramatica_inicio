@@ -1,0 +1,28 @@
+========================================
+Versión I (Gramática con precedencia)  |
+========================================
+
+<PROG>        ::= <SENTENCIAS>    'eof' |
+                  'eof'
+
+<SENTENCIAS>  ::= <SENTENCIA>    <SENTENCIAS> |
+                  <SENTENCIA>
+
+=== PRECEDENCIA ===
+1. not
+2. then
+3. &, |
+
+<SENTENCIA>   ::= <EXPRESION>   |
+                  'variable'  ':'   <EXPRESION>  |
+
+<EXPRESION>   ::= <NEGACION>  |
+                  <EXPRESION> 'then'  <EXPRESION>  |
+                  <EXPRESION>  '|'   <EXPRESION>   |
+                  <EXPRESION>  '&'   <EXPRESION>   |
+                  <ATOM>
+
+<NEGACION>    ::= 'not'   variable  |
+
+<ATOM>        ::= '('  <EXPRESION>   ')'  |
+                  'variable'

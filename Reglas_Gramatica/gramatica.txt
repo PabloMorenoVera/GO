@@ -1,0 +1,140 @@
+========================================
+Versión I (Gramática sin precedencia)  |
+========================================
+
+<PROG>        ::= <SENTENCIAS>    'eof' |
+                  'eof'
+
+<SENTENCIAS>  ::= <SENTENCIA>    <SENTENCIAS> |
+                  <SENTENCIA>
+
+<SENTENCIA>   ::= <EXPRESION>   |
+                  variable  ':'   <EXPRESION>  |
+
+<EXPRESION>   ::= <EXPRESION> 'then'  <EXPRESION>  |
+                  <EXPRESION>  '|'   <EXPRESION>   |
+                  <EXPRESION>  '&'   <EXPRESION>   |
+                  <ATOM>
+
+<ATOM>        ::= '('  <EXPRESION>   ')'  |
+                  'not'   <EXPRESION>
+                  variable
+                  boolean
+
+========================================
+Versión II (Gramática con precedencia) |
+========================================
+=== PRECEDENCIA ===
+1. not
+2. then
+3. &, |
+
+<PROG>        ::= <SENTENCIAS>    'eof' |
+                  'eof'
+
+<SENTENCIAS>  ::= <SENTENCIA>    <SENTENCIAS> |
+                  <SENTENCIA>
+
+<SENTENCIA>   ::= <EXPRESION>   |
+                  variable  ':'   <EXPRESION>  |
+
+<EXPRESION>   ::= <CONSEC>  '|'   <EXPRESION>   |
+                  <CONSEC>  '&'   <EXPRESION>   |
+                  <CONSEC>
+
+<CONSEC>        ::= <ATOM>  'then'  <CONSEC>  |
+                  <ATOM>
+
+<ATOM>        ::= '('  <EXPRESION>   ')'  |
+                  'not'   <EXPRESION>
+                  variable
+                  boolean
+
+========================================
+Versión III (Gramática sin recursividad) |
+========================================
+=== RECURSIVIDAD ===
+1. Quitar la recursividad por la izquierda.
+
+<PROG>        ::= <SENTENCIAS>    'eof' |
+                  'eof'
+
+<SENTENCIAS>  ::= <SENTENCIA>    <SENTENCIAS> |
+                  <SENTENCIA>
+
+<SENTENCIA>   ::= <EXPRESION>   |
+                  variable  ':'   <EXPRESION>   |
+
+<EXPRESION>   ::= <CONSEC>  '|'   <EXPRESION>   |
+                  <CONSEC>  '&'   <EXPRESION>   |
+                  <CONSEC>
+
+<CONSEC>        ::= <ATOM>  'then'  <CONSEC>    |
+                    <ATOM>
+
+<ATOM>        ::= '('  <EXPRESION>   ')'  |
+                  'not'   <EXPRESION>
+                  variable
+                  boolean
+
+========================================
+Versión IV (Gramática sin backtracking) |
+========================================
+=== FACTORIZAR ===
+1. Evitar que varias reglas tengan el mismo prefijo de tokens.
+  1. He quitado la regla de <SENTENCIAS> promocionando <SENTENCIA> y haciendo <PROG> recursivo por la izquierda.
+  2. He factorizado <CONSEC> mediante la regla <POSTCONSEC>.
+  3. He factorizado <EXPRESION> con la regla <EVALUAR>.
+
+<PROG>        ::= <SENTENCIA>   <PROG>    'eof' |
+                  'eof'
+
+<SENTENCIA>   ::= <EXPRESION>   |
+                  variable  ':'   <EXPRESION>   |
+
+<EXPRESION>   ::= <CONSEC>  <EVALUAR>
+
+<EVALUAR>     ::= '|'   <CONSEC>  <EVALUAR>     |
+                  '&'   <CONSEC>  <EVALUAR>     |
+                  <Empty>
+
+<CONSEC>        ::= <ATOM>  <POSTCONSEC>
+
+<POSTCONSEC>    ::= 'then'    <ATOM>    <POSTCONSEC>    |
+                    <Empty>
+
+<ATOM>        ::= '('  <EXPRESION>   ')'  |
+                  'not'   <EXPRESION>
+                  variable
+                  boolean
+
+========================================
+Versión V (Gramática expandida) |
+========================================
+=== EXPANDIR ===
+1. Promocionar reglas hasta que el primer token sea:
+  1. Terminal
+  2. Empty
+  3. No-Terminal que no contenga No-Terminales.
+
+  <PROG>        ::= <SENTENCIA>   <PROG>    'eof' |
+                    'eof'
+
+  <SENTENCIA>   ::= <EXPRESION>   |
+                    variable  ':'   <EXPRESION>   |
+
+  <EXPRESION>   ::= <ATOM>  <CONSEC>  <EVALUAR>
+
+  <EVALUAR>     ::= '|'   <ATOM>  <CONSEC>  <EVALUAR>     |
+                    '&'   <ATOM>  <CONSEC>  <EVALUAR>     |
+                    <Empty>
+
+  CONSEC>    ::= 'then'    <ATOM>    <CONSEC>    |
+                  <Empty>
+
+  <ATOM>        ::= '('  <EXPRESION>   ')'  |
+                    'not'   <EXPRESION>
+                    variable
+                    boolean
+
+El problema de esta gramática es que, cuando llego a sentencia, no puedo saber si cuando tengo una variable va a ser una asignación u otra cosa derivada de la regla >ATOM>.
