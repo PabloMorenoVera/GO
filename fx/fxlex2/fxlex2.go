@@ -20,13 +20,13 @@ const (
 	TokIf
 	TokVType
 	TokTypeId
+	TokRecord
 
 	// Doubt Tokens #Maybe delete
 	TokBool
 	TokCoord
 	TokInt
 	TokFloat
-	TokOpInt
 	TokPunct
 	TokOpBool
 	TokEol
@@ -44,13 +44,15 @@ const (
 	TokDot    TokType = '.'
 
 	// Int Operators Tokens
-	TokSum  TokType = '+'
-	TokRest TokType = '-'
-	TokBar  TokType = '/'
-	TokMin  TokType = '<'
-	TokMax  TokType = '>'
-	TokPorc TokType = '%'
-	TokMul  TokType = '*'
+	TokSum   TokType = '+'
+	TokRest  TokType = '-'
+	TokBar   TokType = '/'
+	TokMin   TokType = '<'
+	TokMax   TokType = '>'
+	TokPorc  TokType = '%'
+	TokMul   TokType = '*'
+	TokPot   TokType = 'p'
+	TokOpInt TokType = 'a'
 
 	// Bool Operators Tokens
 	TokOr  TokType = '|'
@@ -172,8 +174,22 @@ func (l *Lexer) lexID() (t Token, err error) {
 		t.Type = TokIter
 	case "if":
 		t.Type = TokIf
+	case "type":
+		t.Type = TokTypeId
+	case "record":
+		t.Type = TokRecord
 	default:
 		t.Type = TokId
+	}
+	if t.Type == TokId { // Compruebo que sea un record
+		r = l.get()
+		if r == '.' {
+			for r := l.get(); isAlpha(r); r = l.get() {
+			}
+			l.unget()
+		} else {
+			l.unget()
+		}
 	}
 	t.Lexema = l.accept()
 	return t, nil
@@ -308,7 +324,7 @@ func (l *Lexer) Lex() (t Token, err error) {
 				t.Lexema, t.Type = l.accept(), TokMul
 				return t, nil
 			}
-			t.Lexema, t.Type = l.accept(), TokOpInt
+			t.Lexema, t.Type = l.accept(), TokPot
 			return t, err
 		case RuneEOF:
 			t.Type = TokEOF
@@ -324,7 +340,7 @@ func (l *Lexer) Lex() (t Token, err error) {
 				err := fmt.Sprintf("bar rune %c %x", r, r)
 				return t, errors.New(err)
 			}
-			t.Lexema, t.Type = l.accept(), TokDecl
+			t.Lexema, t.Type = l.accept(), TokAsig
 			return t, err
 		}
 

@@ -21,9 +21,9 @@ func TestLexer(t *testing.T) {
 
 	for token.Type != TokEOF {
 		token, err = lex.Lex()
-		lexema := token.Lexema
-		value := token.Valor
-		fmt.Println(lexema, token.Type, value, err)
+		//lexema := token.Lexema
+		//value := token.Valor
+		//fmt.Println(lexema, token.Type, value, err)
 	}
 	fmt.Println("----------------------- End lexer test -----------------------")
 }

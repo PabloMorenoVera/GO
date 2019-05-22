@@ -23,7 +23,7 @@ func line(vector v){
 	Coord p;		//only local variables, no globals
 
 				//last number in the loop is the step
-	iter (i := 0, v.z, 2){	//declares de variable only in the loop
+	iter (i := 0; v.z, 2){	//declares de variable only in the loop
 		p.x = v.x*i;
 		p.y = v.y*i;
 		circle(p, 2, 1);
