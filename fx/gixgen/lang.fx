@@ -39,7 +39,7 @@ func main(){
 	v.y = 8;
 	v.z = 2;
 	pp = [4,45];
-	if(v.x >= 3 | True) {		// (v.x>3)|True
+	if(v.x > 3 | True) {		// (v.x>3)|True
 		circle(pp, 2, 0x1100001f);
 	} else {
 		line(v);
@@ -47,6 +47,7 @@ func main(){
 	}
 	line(v);
 	line(v);
+
 	iter (i := 0; 3, 1){		//loops 0 1 2 3
 		rect(pp, 5, 0xff);
 	}

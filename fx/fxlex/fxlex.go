@@ -4,44 +4,70 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 	"unicode"
 )
 
 const (
-	RuneEOF = iota + 0x80
-	TokId
-	TokInt
-	TokFloat
-	TokBool
-	TokCoord
-	TokOpInt
-	TokOpBool
+	RuneEOF         = 0
+	TokId   TokType = iota
 	TokEOF
-	TokEol
 	TokFunc
 	TokMain
-	TokPunct
-	TokAsig
 	TokIter
 	TokIf
+	TokElse
+	TokTypeID
+	TokRecord
+	TokInit
 
-	TokTypeId
-	TokLPar
-	TokRPar
-	TokLCorch
-	TokRCorch
-	TokComma
-	TokPC
+	// Doubt Tokens #Maybe delete
+	TokBool
+	TokCoord
+	TokInt
+	TokFloat
+	TokAsig
+
+	// Punctuation Tokens
+	TokLPar   TokType = '('
+	TokRPar   TokType = ')'
+	TokLCorch TokType = '['
+	TokRCorch TokType = ']'
+	TokComma  TokType = ','
+	TokPC     TokType = ';'
+	TokLKey   TokType = '{'
+	TokRKey   TokType = '}'
+	TokDot    TokType = '.'
+
+	// Int Operators Tokens
+	TokSum   TokType = '+'
+	TokRest  TokType = '-'
+	TokBar   TokType = '/'
+	TokMin   TokType = '<'
+	TokMax   TokType = '>'
+	TokPorc  TokType = '%'
+	TokMul   TokType = '*'
+	TokPot   TokType = 'p'
+	TokOpInt TokType = 'o'
+
+	// Bool Operators Tokens
+	TokOr  TokType = '|'
+	TokAnd TokType = '&'
+	TokNot TokType = '!'
+	TokXOr TokType = '^'
+
+	// Result Operator Tokens
+	TokEqual TokType = '='
 )
 
 type TokType rune
 
 type Token struct {
-	lexema string
-	TokType
-	valor int64
+	Lexema string
+	Type   TokType
+	Valor  int64
 }
 
 type RuneScanner interface {
@@ -54,7 +80,9 @@ type Lexer struct {
 	line     int
 	r        RuneScanner
 	lastrune rune
+
 	accepted []rune
+	tokSaved *Token
 }
 
 func NewLexer(r RuneScanner, file string) (l *Lexer) {
@@ -62,43 +90,6 @@ func NewLexer(r RuneScanner, file string) (l *Lexer) {
 	l.file = file
 	l.r = r
 	return l
-}
-
-func convToken(t Token) (s string) {
-	switch t.TokType {
-	case TokEOF:
-		return "TokEOF"
-	case TokId:
-		return "TokId"
-	case TokInt:
-		return "TokInt"
-	case TokFloat:
-		return "TokFloat"
-	case TokBool:
-		return "TokBool"
-	case TokCoord:
-		return "TokCoord"
-	case TokOpInt:
-		return "TokOpInt"
-	case TokOpBool:
-		return "TokOpBool"
-	case TokEol:
-		return "TokEol"
-	case TokFunc:
-		return "TokFunc"
-	case TokMain:
-		return "TokMain"
-	case TokPunct:
-		return "TokPunct"
-	case TokAsig:
-		return "TokAsig"
-	case TokIter:
-		return "TokIter"
-	case TokIf:
-		return "TokIf"
-	default:
-		return "TokInvalid"
-	}
 }
 
 func (l *Lexer) get() (r rune) {
@@ -148,6 +139,107 @@ func (l *Lexer) accept() (tok string) {
 	return tok
 }
 
+func (l *Lexer) Peek() (t Token, err error) {
+	t, err = l.Lex()
+	if err == nil {
+		l.tokSaved = &t
+	}
+	return t, nil
+}
+
+func (l *Lexer) Lex() (t Token, err error) {
+	DToks := false
+	defer func() {
+		if DToks {
+			fmt.Fprintf(os.Stderr, "Lex: %v \n", t)
+		}
+	}()
+
+	if l.tokSaved != nil {
+		t = *l.tokSaved
+		l.tokSaved = nil
+		return t, nil
+	}
+
+	for r := l.get(); ; r = l.get() {
+
+		if unicode.IsSpace(r) && r != '\n' || r == '\t' {
+			l.accept()
+			continue
+		}
+		switch r {
+		case '/':
+			r = l.get()
+			if r == '/' {
+				l.readcomment()
+				l.accept()
+				continue
+			} else {
+				l.unget()
+				t.Lexema, t.Type = l.accept(), TokBar
+				return t, nil
+			}
+		case '+', '-', '%', '(', ')', ',', '{', '}', ';', '[', ']', '.', '=', '|', '&', '!', '^':
+			t.Lexema, t.Type = l.accept(), TokType(r)
+			return t, nil
+		case '<', '>':
+			r = l.get()
+			if r != '=' {
+				l.unget()
+				if r == '<' {
+					t.Type = TokMin
+				} else {
+					t.Type = TokMax
+				}
+				t.Lexema = l.accept()
+				return t, nil
+			}
+			t.Lexema, t.Type = l.accept(), TokOpInt
+			return t, err
+		case '*':
+			r = l.get()
+			if r != '*' {
+				l.unget()
+				t.Lexema, t.Type = l.accept(), TokMul
+				return t, nil
+			}
+			t.Lexema, t.Type = l.accept(), TokPot
+			return t, err
+		case RuneEOF:
+			t.Type = TokEOF
+			l.accept()
+			return t, err
+		case '\n':
+			l.accept()
+			continue
+		case ':':
+			if r == ':' && l.get() != '=' {
+				l.unget()
+				l.accept()
+				err := fmt.Sprintf("bar rune %c %x", r, r)
+				return t, errors.New(err)
+			}
+			t.Lexema, t.Type = l.accept(), TokAsig
+			return t, err
+		}
+
+		switch {
+		case unicode.IsLetter(r):
+			l.unget()
+			t, err = l.lexID()
+			return t, err
+		case unicode.IsDigit(r):
+			l.unget()
+			t, err = l.lexNum()
+			return t, err
+		default:
+			err := fmt.Sprintf("bad rune %c %x", r, r)
+			return t, errors.New(err)
+		}
+	}
+	return t, err
+}
+
 func (l *Lexer) readcomment() {
 	for r := l.get(); ; r = l.get() {
 		if r == '\n' {
@@ -170,21 +262,35 @@ func (l *Lexer) lexID() (t Token, err error) {
 	l.unget()
 	switch string(l.accepted) {
 	case "True", "False":
-		t.TokType = TokBool
-	case "Coord":
-		t.TokType = TokCoord
+		t.Type = TokBool
+	case "int", "bool", "vector", "Coord", "difficult":
+		t.Type = TokTypeID
 	case "func":
-		t.TokType = TokFunc
-	case "main":
-		t.TokType = TokMain
+		t.Type = TokFunc
 	case "iter":
-		t.TokType = TokIter
+		t.Type = TokIter
 	case "if":
-		t.TokType = TokIf
+		t.Type = TokIf
+	case "else":
+		t.Type = TokElse
+	case "type":
+		t.Type = TokTypeID
+	case "record":
+		t.Type = TokRecord
 	default:
-		t.TokType = TokId
+		t.Type = TokId
 	}
-	t.lexema = l.accept()
+	if t.Type == TokId { // Compruebo que sea un record
+		r = l.get()
+		if r == '.' {
+			for r := l.get(); isAlpha(r); r = l.get() {
+			}
+			l.unget()
+		} else {
+			l.unget()
+		}
+	}
+	t.Lexema = l.accept()
 	return t, nil
 }
 
@@ -209,7 +315,6 @@ func (l *Lexer) lexNum() (t Token, err error) {
 		for r = l.get(); unicode.IsDigit(r); r = l.get() {
 		}
 	}
-
 	switch {
 	case strings.ContainsRune(Es, r):
 		r = l.get()
@@ -227,21 +332,21 @@ func (l *Lexer) lexNum() (t Token, err error) {
 				}
 			}
 			l.unget()
-			t.lexema = l.accept()
-			t.valor, err = strconv.ParseInt(t.lexema, 0, 64)
+			t.Lexema = l.accept()
+			t.Valor, err = strconv.ParseInt(t.Lexema, 0, 64)
 			if err != nil {
-				return t, errors.New("bad int [" + t.lexema + "]")
+				return t, errors.New("bad int [" + t.Lexema + "]")
 			}
-			t.TokType = TokInt
+			t.Type = TokInt
 			return t, err
 		} else {
 			l.unget()
-			t.lexema = l.accept()
-			t.valor, err = strconv.ParseInt(t.lexema, 10, 64)
+			t.Lexema = l.accept()
+			t.Valor, err = strconv.ParseInt(t.Lexema, 10, 64)
 			if err != nil {
-				return t, errors.New("bad int [" + t.lexema + "]")
+				return t, errors.New("bad int [" + t.Lexema + "]")
 			}
-			t.TokType = TokInt
+			t.Type = TokInt
 			return t, nil
 		}
 	default:
@@ -250,100 +355,11 @@ func (l *Lexer) lexNum() (t Token, err error) {
 	for r = l.get(); unicode.IsDigit(r); r = l.get() {
 	}
 	l.unget()
-	t.lexema = l.accept()
-	t.valor, err = strconv.ParseInt(t.lexema, 10, 64)
+	t.Lexema = l.accept()
+	t.Valor, err = strconv.ParseInt(t.Lexema, 10, 64)
 	if err != nil {
-		return t, errors.New("bad int [" + t.lexema + "]")
+		return t, errors.New("bad int [" + t.Lexema + "]")
 	}
-	t.TokType = TokFloat
+	t.Type = TokFloat
 	return t, nil
-}
-
-func (l *Lexer) Peek() (t Token, err error) {
-	t, err = l.Lex()
-	if err == nil {
-		l.accept()
-	}
-	return t, nil
-}
-
-func (l *Lexer) Lex() (t Token, err error) {
-
-	for r := l.get(); ; r = l.get() {
-
-		if unicode.IsSpace(r) && r != '\n' || r == '\t' {
-			l.accept()
-			continue
-		}
-		switch r {
-		case '+', '-', '/', '>', '<', '%', '*':
-			switch r {
-			case '/':
-				r = l.get()
-				if r == '/' {
-					l.readcomment()
-					l.accept()
-					continue
-				} else {
-					l.unget()
-					t.TokType = TokOpInt
-					t.lexema = l.accept()
-					return t, err
-				}
-			case '*':
-				r = l.get()
-				if r != '*' {
-					l.unget()
-				}
-			case '>', '<':
-				r = l.get()
-				if r != '=' {
-					l.unget()
-				}
-			}
-			t.TokType = TokOpInt
-			t.lexema = l.accept()
-			return t, err
-		case '(', ')', ',', '{', '}', ';', '[', ']', '.':
-			t.TokType = TokPunct
-			t.lexema = l.accept()
-			return t, nil
-		case RuneEOF:
-			t.TokType = TokEOF
-			l.accept()
-			return t, err
-		case '\n':
-			l.accept()
-			continue
-		case ':', '=':
-			if r == ':' && l.get() != '=' {
-				l.unget()
-				l.accept()
-				err := fmt.Sprintf("bar rune %c %x", r, r)
-				return t, errors.New(err)
-			}
-			t.TokType = TokAsig
-			t.lexema = l.accept()
-			return t, err
-		case '|', '&', '!', '^':
-			t.lexema = l.accept()
-			t.TokType = TokOpBool
-			return t, err
-		}
-
-		switch {
-		case unicode.IsLetter(r):
-			l.unget()
-			t, err = l.lexID()
-			return t, err
-		case unicode.IsDigit(r):
-			l.unget()
-			t, err = l.lexNum()
-			return t, err
-		default:
-			err := fmt.Sprintf("bad rune %c %x", r, r)
-			return t, errors.New(err)
-		}
-	}
-	return t, err
 }

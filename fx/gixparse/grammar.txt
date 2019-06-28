@@ -1,0 +1,20 @@
+<PROG>       ::=	<FUNCTION>	'eof'
+
+<FUNCTION>      ::=	'func'	Id  '(' <OPT_PARAMS> ')'  '{' <STATEMENTS> '}'	<FUNCTION>
+
+<PARAMS>    ::= TypeId  Id  <OPT_PARAMS>  |
+                    Empty
+
+<OPT_PARAMS>        ::= ','  TypeId  Id   <OPT_PARAMS>  |
+                    Empty
+
+<STATEMENT>    ::= 'iter' '(' <ASIG> ';' <ATOM> ',' <ATOM> ')' '{' <STATEMENT> '}'  <STATEMENT>  |
+										'Id'	'('	<ATOM>	','	<ATOM>	','	<ATOM>	','	<ATOM>	')'	';' |
+										Empty
+
+<ASIG>          ::= Id  ':='  <ATOM>
+
+<ATOM>	        ::=	int	|
+                    bool	|
+                    Id	|
+                    Empty

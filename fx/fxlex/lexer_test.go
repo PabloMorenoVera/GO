@@ -19,24 +19,19 @@ func TestLexer(t *testing.T) {
 	r := bufio.NewReader(f)
 	lex := NewLexer(r, "lang.fx")
 
-	for token.TokType != TokEOF {
+	for token.Type != TokEOF {
 		token, err = lex.Lex()
-		lexema := token.lexema
-		tokenType := convToken(token)
-		value := token.valor
-		fmt.Println(lexema, tokenType, value, err)
 	}
 	fmt.Println("----------------------- End lexer test -----------------------")
 }
 
 func TestToken(t *testing.T) {
 	var token Token
-	listToken := [16]TokType{TokId, TokInt, TokFloat, TokBool, TokCoord, TokOpInt, TokOpBool, TokEOF, TokEol, TokFunc, TokPunct, TokAsig, TokMain, TokIter, TokIf}
+	listToken := [13]TokType{TokId, TokInt, TokFloat, TokBool, TokCoord, TokOpInt, TokEOF, TokFunc, TokAsig, TokMain, TokIter, TokIf, TokLPar}
 
 	for _, tok := range listToken {
-		token.TokType = tok
-		tokName := convToken(token)
-		fmt.Println(tokName)
+		token.Type = tok
+		fmt.Println(fmt.Sprintf("TokType: %v", token.Type))
 	}
 	fmt.Println("----------------------- End Token test -----------------------")
 }
